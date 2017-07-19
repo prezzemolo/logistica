@@ -67,9 +67,14 @@ class Router {
       $path_match_result = mb_ereg($path_match_regexp_pattern, $path, $path_match_dynamic_element_values);
 
       if ($path_match_result === false) return false;
-      array_shift($path_match_dynamic_element_values);
 
-      return call_user_func($callback, $path_match_dynamic_element_values);
+      array_shift($path_match_dynamic_element_values);
+      $path_match_dynamic_elements = array_combine(
+        $path_match_dynamic_element_names, $path_match_dynamic_element_values);
+
+      return call_user_func($callback, [
+        $path_match_dynamic_elements
+      ]);
     }
   }
 
