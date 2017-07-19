@@ -52,28 +52,28 @@ class Router {
     foreach ($this->routes as $route => $callback) {
       $route_factors = trim($route, '/');
       $path_match_regexp_pattern = '/^';
-      $path_match_dynamic_element_names = array();
+      $path_match_dynamic_param_names = array();
 
       foreach ($route_factors as $route_factor) {
         if (!ExString::startsWith($route_factor, ':')) {
           $path_match_regexp_pattern .= $route_factor + '\/';
           continue;
         }
-        array_push($path_match_dynamic_element_names, mb_strcut($route_factor, 1));
+        array_push($path_match_dynamic_param_names, mb_strcut($route_factor, 1));
         $path_match_regexp_pattern .= '([^\/]*?)\/';
       }
 
-      $path_match_dynamic_element_values = array();
-      $path_match_result = mb_ereg($path_match_regexp_pattern, $path, $path_match_dynamic_element_values);
+      $path_match_dynamic_param_values = array();
+      $path_match_result = mb_ereg($path_match_regexp_pattern, $path, $path_match_dynamic_param_values);
 
       if ($path_match_result === false) return false;
 
-      array_shift($path_match_dynamic_element_values);
-      $path_match_dynamic_elements = array_combine(
-        $path_match_dynamic_element_names, $path_match_dynamic_element_values);
+      array_shift($path_match_dynamic_param_values);
+      $path_match_dynamic_params = array_combine(
+        $path_match_dynamic_param_names, $path_match_dynamic_param_values);
 
       return call_user_func($callback, [
-        $path_match_dynamic_elements
+        $path_match_dynamic_params
       ]);
     }
   }
