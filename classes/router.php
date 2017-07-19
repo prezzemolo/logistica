@@ -14,7 +14,7 @@ class Router {
 
   private $path;
   private $prefix;
-  private $routes = [];
+  private $routes = array();
 
   private function utrim (string $before) {
     return trim($before, '/');
@@ -25,7 +25,7 @@ class Router {
     $this->path = utrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
   }
 
-  public function add_route (string $origin_name, callback $callback) {
+  public function add_route (string $origin_name, callable $callback) {
     $name = utrim($origin_name);
     if (isset($this->routes[$name])) throw new RouterError("You can't override exstent route.");
     $this->routes[$name] = $callback;
@@ -33,7 +33,7 @@ class Router {
 
   public function remove_route (string $origin_name) {
     $name = utrim($origin_name);
-    if (! isset($this->routes[$name])) throw new RouterError("You can't remove non-exstent route.");
+    if (!isset($this->routes[$name])) throw new RouterError("You can't remove non-exstent route.");
     unset($this->routes[$name]);
   }
 
@@ -49,8 +49,27 @@ class Router {
   }
 
   private function search_and_exec (string $path) {
-    foreach ($this->routes as $name => $callback) {
-      // WIP
+    foreach ($this->routes as $route => $callback) {
+      $route_factors = trim($route, '/');
+      $path_match_regexp_pattern = '/^';
+      $path_match_dynamic_element_names = array();
+
+      foreach ($route_factors as $route_factor) {
+        if (!ExString::startsWith($route_factor, ':')) {
+          $path_match_regexp_pattern .= $route_factor + '\/';
+          continue;
+        }
+        array_push($path_match_dynamic_element_names, mb_strcut($route_factor, 1));
+        $path_match_regexp_pattern .= '([^\/]*?)\/';
+      }
+
+      $path_match_dynamic_element_values = array();
+      $path_match_result = mb_ereg($path_match_regexp_pattern, $path, $path_match_dynamic_element_values);
+
+      if ($path_match_result === false) return false;
+      array_shift($path_match_dynamic_element_values);
+
+      return call_user_func($callback, $path_match_dynamic_element_values);
     }
   }
 
